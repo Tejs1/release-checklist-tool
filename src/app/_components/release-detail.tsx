@@ -34,6 +34,7 @@ export function ReleaseDetail({
 				date: release.date,
 				additionalInfo: release.additionalInfo,
 				completedSteps: release.completedSteps,
+				stepCompletedAt: release.stepCompletedAt,
 			}}
 		/>
 	);
