@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash2Icon } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import { api } from "@/trpc/react";
 import { StatusBadge } from "./status-badge";
 
 export function ReleaseList() {
+	const router = useRouter();
 	const { data: releases, isLoading } = api.release.list.useQuery();
 	const utils = api.useUtils();
 
@@ -23,7 +24,8 @@ export function ReleaseList() {
 		onSuccess: () => utils.release.list.invalidate(),
 	});
 
-	function handleDelete(id: number, name: string) {
+	function handleDelete(e: React.MouseEvent, id: number, name: string) {
+		e.stopPropagation();
 		if (!confirm(`Delete release "${name}"?`)) return;
 		deleteMutation.mutate({ id });
 	}
@@ -49,12 +51,16 @@ export function ReleaseList() {
 					<TableHead>Release</TableHead>
 					<TableHead>Date</TableHead>
 					<TableHead>Status</TableHead>
-					<TableHead className="text-right">Actions</TableHead>
+					<TableHead className="text-right" />
 				</TableRow>
 			</TableHeader>
 			<TableBody>
 				{releases.map((release) => (
-					<TableRow key={release.id}>
+					<TableRow
+						className="cursor-pointer"
+						key={release.id}
+						onClick={() => router.push(`/release/${release.id}`)}
+					>
 						<TableCell className="font-medium">{release.name}</TableCell>
 						<TableCell className="text-muted-foreground">
 							{new Date(release.date).toLocaleDateString("en-US", {
@@ -66,23 +72,18 @@ export function ReleaseList() {
 						<TableCell>
 							<StatusBadge status={release.status} />
 						</TableCell>
-						<TableCell>
-							<div className="flex items-center justify-end gap-1">
-								<Button asChild size="sm" variant="link">
-									<Link href={`/release/${release.id}`}>View</Link>
-								</Button>
-								<Button
-									aria-label={`Delete ${release.name}`}
-									className="text-muted-foreground hover:text-destructive"
-									disabled={deleteMutation.isPending}
-									onClick={() => handleDelete(release.id, release.name)}
-									size="icon-sm"
-									type="button"
-									variant="ghost"
-								>
-									<Trash2Icon aria-hidden="true" />
-								</Button>
-							</div>
+						<TableCell className="text-right">
+							<Button
+								aria-label={`Delete ${release.name}`}
+								className="text-muted-foreground hover:text-destructive"
+								disabled={deleteMutation.isPending}
+								onClick={(e) => handleDelete(e, release.id, release.name)}
+								size="icon-sm"
+								type="button"
+								variant="ghost"
+							>
+								<Trash2Icon aria-hidden="true" />
+							</Button>
 						</TableCell>
 					</TableRow>
 				))}
