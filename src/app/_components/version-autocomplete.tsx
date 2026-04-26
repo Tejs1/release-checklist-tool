@@ -36,11 +36,12 @@ export function VersionAutocomplete({
 	}, [suggestion, value, onChange]);
 
 	return (
-		<Popover onOpenChange={setOpen} open={open && suggestions.length > 0}>
+		<Popover open={open && suggestions.length > 0}>
 			<PopoverTrigger asChild>
 				<Input
 					id="release-name"
 					onChange={(e) => onChange(e.target.value)}
+					onBlur={() => setTimeout(() => setOpen(false), 150)}
 					onFocus={() => setOpen(true)}
 					placeholder="e.g. Version 1.0.0"
 					ref={inputRef}
