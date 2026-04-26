@@ -1,29 +1,77 @@
-# Create T3 App
+# ReleaseCheck
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A release checklist tool that helps developers track their release process. Built with the T3 Stack (Next.js, tRPC, Drizzle ORM, Tailwind CSS) backed by PostgreSQL.
 
-## What's next? How do I make an app with this?
+## Getting Started
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+### Prerequisites
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- [Bun](https://bun.sh/) (or Node.js 18+)
+- A PostgreSQL database (e.g., [Neon](https://neon.tech/) free tier)
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+### Setup
 
-## Learn More
+```bash
+# Install dependencies
+bun install
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+# Copy environment file and add your database URL
+cp .env.example .env
+# Edit .env with your PostgreSQL connection string
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+# Push the database schema
+bun run db:push
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+# Start the dev server
+bun dev
+```
 
-## How do I deploy this?
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+### Docker (local development)
+
+```bash
+# Start PostgreSQL + app
+docker compose up
+
+# In a separate terminal (first time only): push the schema
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/releasecheck" bun run db:push
+```
+
+## Database Schema
+
+### `release-checklist-tool_release`
+
+| Column           | Type                     | Constraints                |
+| ---------------- | ------------------------ | -------------------------- |
+| `id`             | `serial`                 | Primary key                |
+| `name`           | `varchar(256)`           | Not null                   |
+| `date`           | `timestamp with tz`      | Not null                   |
+| `additional_info` | `text`                  | Nullable                   |
+| `completed_steps` | `jsonb`                 | Not null, default `[]`     |
+| `created_at`     | `timestamp with tz`      | Not null, default `now()`  |
+| `updated_at`     | `timestamp with tz`      | Not null, default `now()`  |
+
+The `status` field is **computed** from `completed_steps`:
+- `planned` — no steps completed
+- `ongoing` — at least one step completed
+- `done` — all steps completed
+
+## API Endpoints (tRPC)
+
+All endpoints are served via tRPC at `/api/trpc`. The procedures are:
+
+| Procedure          | Type     | Input                                              | Description              |
+| ------------------ | -------- | -------------------------------------------------- | ------------------------ |
+| `release.list`     | Query    | —                                                  | List all releases        |
+| `release.getById`  | Query    | `{ id: number }`                                   | Get a single release     |
+| `release.create`   | Mutation | `{ name, date, additionalInfo? }`                  | Create a new release     |
+| `release.update`   | Mutation | `{ id, name, date, additionalInfo, completedSteps }` | Update a release       |
+| `release.delete`   | Mutation | `{ id: number }`                                   | Delete a release         |
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS 4
+- **API**: tRPC v11
+- **Database**: PostgreSQL via Neon + Drizzle ORM
+- **Deployment**: Vercel + Neon
