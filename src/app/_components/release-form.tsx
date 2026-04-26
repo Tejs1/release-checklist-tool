@@ -1,8 +1,21 @@
 "use client";
 
+import { ChevronRightIcon, SaveIcon, Trash2Icon } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardAction,
+	CardContent,
+	CardHeader,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RELEASE_STEPS } from "@/shared/steps";
 import { api } from "@/trpc/react";
 
@@ -96,152 +109,114 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 	}
 
 	return (
-		<div className="rounded-lg border border-gray-200 bg-white p-6">
-			<div className="mb-6 flex items-center justify-between">
-				<nav className="flex items-center gap-2 text-sm">
-					<a
-						className="font-medium text-primary hover:text-primary-hover"
-						href="/"
-					>
-						All releases
-					</a>
-					<span className="text-gray-400">&gt;</span>
-					<span className="text-gray-600">
+		<Card>
+			<CardHeader className="border-b">
+				<nav className="flex items-center gap-1.5 text-sm">
+					<Button asChild size="sm" variant="link">
+						<Link href="/">All releases</Link>
+					</Button>
+					<ChevronRightIcon
+						aria-hidden="true"
+						className="size-4 text-muted-foreground"
+					/>
+					<span className="font-medium text-foreground">
 						{isNew ? "New release" : release.name}
 					</span>
 				</nav>
 				{!isNew && (
-					<button
-						className="inline-flex items-center gap-1.5 rounded-md bg-danger px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-danger-hover"
-						disabled={deleteMutation.isPending}
-						onClick={handleDelete}
-						type="button"
-					>
-						Delete
-						<svg
-							aria-hidden="true"
-							className="h-4 w-4"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth={2}
-							viewBox="0 0 24 24"
+					<CardAction>
+						<Button
+							disabled={deleteMutation.isPending}
+							onClick={handleDelete}
+							type="button"
+							variant="destructive"
 						>
-							<path
-								d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-					</button>
+							Delete
+							<Trash2Icon aria-hidden="true" data-icon="inline-end" />
+						</Button>
+					</CardAction>
 				)}
-			</div>
+			</CardHeader>
 
-			<div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-				<div>
-					<label
-						className="mb-1 block font-medium text-gray-700 text-sm"
-						htmlFor="release-name"
-					>
-						Release
-					</label>
-					<input
-						className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-						id="release-name"
-						onChange={(e) => setName(e.target.value)}
-						placeholder="e.g. Version 1.0.0"
-						required
-						type="text"
-						value={name}
-					/>
-				</div>
-				<div>
-					<label
-						className="mb-1 block font-medium text-gray-700 text-sm"
-						htmlFor="release-date"
-					>
-						Date
-					</label>
-					<input
-						className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-						id="release-date"
-						onChange={(e) => setDate(e.target.value)}
-						required
-						type="date"
-						value={date}
-					/>
-				</div>
-			</div>
-
-			{!isNew && (
-				<div className="mb-6">
+			<CardContent>
+				<div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div className="space-y-2">
-						{RELEASE_STEPS.map((step) => (
-							<label
-								className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-gray-50"
-								key={step.id}
-							>
-								<input
-									checked={completedSteps.includes(step.id)}
-									className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-									onChange={() => toggleStep(step.id)}
-									type="checkbox"
-								/>
-								<span
-									className={`text-sm ${
-										completedSteps.includes(step.id)
-											? "text-gray-400 line-through"
-											: "text-gray-700"
-									}`}
-								>
-									{step.label}
-								</span>
-							</label>
-						))}
+						<Label htmlFor="release-name">Release</Label>
+						<Input
+							id="release-name"
+							onChange={(e) => setName(e.target.value)}
+							placeholder="e.g. Version 1.0.0"
+							required
+							type="text"
+							value={name}
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="release-date">Date</Label>
+						<Input
+							id="release-date"
+							onChange={(e) => setDate(e.target.value)}
+							required
+							type="date"
+							value={date}
+						/>
 					</div>
 				</div>
-			)}
 
-			<div className="mb-6">
-				<label
-					className="mb-1 block font-medium text-gray-700 text-sm"
-					htmlFor="additional-info"
-				>
-					Additional remarks / tasks
-				</label>
-				<textarea
-					className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-					id="additional-info"
-					onChange={(e) => setAdditionalInfo(e.target.value)}
-					placeholder="Please enter any other important notes for the release"
-					rows={4}
-					value={additionalInfo}
-				/>
-			</div>
+				{!isNew && (
+					<div className="mb-6 space-y-2">
+						{RELEASE_STEPS.map((step) => {
+							const isComplete = completedSteps.includes(step.id);
+							const checkboxId = `release-step-${step.id}`;
 
-			<div className="flex justify-end">
-				<button
-					className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2 font-medium text-sm text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
-					disabled={saving || !name.trim() || !date}
-					onClick={handleSave}
-					type="button"
-				>
-					{saving ? "Saving..." : "Save"}
-					<svg
-						aria-hidden="true"
-						className="h-4 w-4"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth={2}
-						viewBox="0 0 24 24"
+							return (
+								<div
+									className="flex items-center gap-3 rounded-lg border border-transparent px-2 py-2 transition-colors hover:bg-muted/50"
+									key={step.id}
+								>
+									<Checkbox
+										checked={isComplete}
+										id={checkboxId}
+										onCheckedChange={() => toggleStep(step.id)}
+									/>
+									<Label
+										className={
+											isComplete
+												? "text-muted-foreground line-through"
+												: "text-foreground"
+										}
+										htmlFor={checkboxId}
+									>
+										{step.label}
+									</Label>
+								</div>
+							);
+						})}
+					</div>
+				)}
+
+				<div className="mb-6 space-y-2">
+					<Label htmlFor="additional-info">Additional remarks / tasks</Label>
+					<Textarea
+						id="additional-info"
+						onChange={(e) => setAdditionalInfo(e.target.value)}
+						placeholder="Please enter any other important notes for the release"
+						rows={4}
+						value={additionalInfo}
+					/>
+				</div>
+
+				<div className="flex justify-end">
+					<Button
+						disabled={saving || !name.trim() || !date}
+						onClick={handleSave}
+						type="button"
 					>
-						<path
-							d="M5 13l4 4L19 7"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						/>
-					</svg>
-				</button>
-			</div>
-		</div>
+						{saving ? "Saving..." : "Save"}
+						<SaveIcon aria-hidden="true" data-icon="inline-end" />
+					</Button>
+				</div>
+			</CardContent>
+		</Card>
 	);
 }

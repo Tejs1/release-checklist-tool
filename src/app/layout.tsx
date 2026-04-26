@@ -1,9 +1,11 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-
+import { Geist, Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
 import { TRPCReactProvider } from "@/trpc/react";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
 	title: "ReleaseCheck",
@@ -20,7 +22,7 @@ export default function RootLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {
 	return (
-		<html className={`${geist.variable}`} lang="en">
+		<html className={cn(geist.variable, "font-sans", inter.variable)} lang="en">
 			<body className="min-h-screen bg-gray-50">
 				<TRPCReactProvider>
 					<header className="border-gray-200 border-b bg-white py-6 text-center">

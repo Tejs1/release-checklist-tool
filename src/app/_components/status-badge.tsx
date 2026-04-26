@@ -1,17 +1,17 @@
+import { Badge } from "@/components/ui/badge";
 import type { ReleaseStatus } from "@/shared/steps";
 
 const styles: Record<ReleaseStatus, string> = {
-	planned: "bg-gray-100 text-gray-700",
-	ongoing: "bg-amber-100 text-amber-700",
-	done: "bg-green-100 text-green-700",
+	planned: "bg-secondary text-secondary-foreground",
+	ongoing:
+		"bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+	done: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
 };
 
 export function StatusBadge({ status }: { status: ReleaseStatus }) {
 	return (
-		<span
-			className={`inline-block rounded-full px-3 py-0.5 font-semibold text-xs capitalize ${styles[status]}`}
-		>
+		<Badge className={`capitalize ${styles[status]}`} variant="secondary">
 			{status}
-		</span>
+		</Badge>
 	);
 }
