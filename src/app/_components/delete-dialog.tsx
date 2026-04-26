@@ -1,5 +1,7 @@
 "use client";
 
+import { LoaderCircleIcon } from "lucide-react";
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -16,11 +18,13 @@ export function DeleteDialog({
 	releaseName,
 	onConfirm,
 	disabled,
+	isPending,
 	trigger,
 }: {
 	releaseName: string;
 	onConfirm: () => void;
 	disabled?: boolean;
+	isPending?: boolean;
 	trigger: React.ReactNode;
 }) {
 	return (
@@ -28,7 +32,7 @@ export function DeleteDialog({
 			<AlertDialogTrigger asChild disabled={disabled}>
 				{trigger}
 			</AlertDialogTrigger>
-			<AlertDialogContent>
+			<AlertDialogContent onClick={(event) => event.stopPropagation()}>
 				<AlertDialogHeader>
 					<AlertDialogTitle>Delete release?</AlertDialogTitle>
 					<AlertDialogDescription>
@@ -38,12 +42,20 @@ export function DeleteDialog({
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel>Cancel</AlertDialogCancel>
+					<AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
 					<AlertDialogAction
 						className="bg-destructive text-white hover:bg-destructive/90"
+						disabled={isPending}
 						onClick={onConfirm}
 					>
-						Delete
+						{isPending ? (
+							<>
+								<LoaderCircleIcon className="animate-spin" />
+								Deleting...
+							</>
+						) : (
+							"Delete"
+						)}
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>

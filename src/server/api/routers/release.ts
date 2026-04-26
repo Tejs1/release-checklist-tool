@@ -1,4 +1,5 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { activityLog, releases } from "@/server/db/schema";
@@ -36,7 +37,7 @@ export const releaseRouter = createTRPCRouter({
 				where: eq(releases.id, input.id),
 			});
 			if (!release) {
-				throw new Error("Release not found");
+				return null;
 			}
 			return {
 				...release,
@@ -90,7 +91,20 @@ export const releaseRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const today = startOfToday();
 			if (input.date < today) {
-				throw new Error("Release date cannot be in the past");
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Release date cannot be in the past",
+				});
+			}
+
+			const existing = await ctx.db.query.releases.findFirst({
+				where: eq(releases.name, input.name.trim()),
+			});
+			if (existing) {
+				throw new TRPCError({
+					code: "CONFLICT",
+					message: `A release named "${input.name.trim()}" already exists`,
+				});
 			}
 
 			const rows = await ctx.db
@@ -130,7 +144,22 @@ export const releaseRouter = createTRPCRouter({
 			const current = await ctx.db.query.releases.findFirst({
 				where: eq(releases.id, input.id),
 			});
-			if (!current) throw new Error("Release not found");
+			if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Release not found" });
+
+			if (current.name !== input.name.trim()) {
+				const duplicate = await ctx.db.query.releases.findFirst({
+					where: and(
+						eq(releases.name, input.name.trim()),
+						ne(releases.id, input.id),
+					),
+				});
+				if (duplicate) {
+					throw new TRPCError({
+						code: "CONFLICT",
+						message: `A release named "${input.name.trim()}" already exists`,
+					});
+				}
+			}
 
 			const oldSteps = new Set(current.completedSteps);
 			const newSteps = new Set(input.completedSteps);

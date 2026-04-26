@@ -83,11 +83,24 @@ export function suggestNextVersion(
 	if (parts.length !== 3) return null;
 
 	const [maj = 0, min = 0, pat = 0] = parts;
+	const nameSet = new Set(existingNames);
+
+	function nextAvailable(major: number, minor: number, patch: number, bump: "major" | "minor" | "patch"): string {
+		if (bump === "patch") patch += 1;
+		else if (bump === "minor") { minor += 1; patch = 0; }
+		else { major += 1; minor = 0; patch = 0; }
+		while (nameSet.has(`${prefix}${major}.${minor}.${patch}`)) {
+			if (bump === "patch") patch += 1;
+			else if (bump === "minor") minor += 1;
+			else major += 1;
+		}
+		return `${prefix}${major}.${minor}.${patch}`;
+	}
 
 	return {
 		prefix,
-		patch: `${prefix}${maj}.${min}.${pat + 1}`,
-		minor: `${prefix}${maj}.${min + 1}.0`,
-		major: `${prefix}${maj + 1}.0.0`,
+		patch: nextAvailable(maj, min, pat, "patch"),
+		minor: nextAvailable(maj, min, pat, "minor"),
+		major: nextAvailable(maj, min, pat, "major"),
 	};
 }

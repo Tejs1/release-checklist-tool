@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRightIcon, SaveIcon, Trash2Icon } from "lucide-react";
+import { ChevronRightIcon, LoaderCircleIcon, SaveIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -89,22 +89,28 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 		{ enabled: isNew },
 	);
 
+	const [saveError, setSaveError] = useState<string | null>(null);
+
 	const createMutation = api.release.create.useMutation({
 		onSuccess: (data) => {
+			setSaveError(null);
 			utils.release.list.invalidate();
 			utils.release.suggestVersion.invalidate();
 			if (data) router.push(`/release/${data.id}`);
 		},
+		onError: (err) => setSaveError(err.message),
 	});
 
 	const updateMutation = api.release.update.useMutation({
 		onSuccess: () => {
+			setSaveError(null);
 			utils.release.list.invalidate();
 			utils.release.getById.invalidate({ id: release?.id });
 			utils.release.getActivityLog.invalidate({
 				releaseId: release?.id,
 			});
 		},
+		onError: (err) => setSaveError(err.message),
 	});
 
 	const deleteMutation = api.release.delete.useMutation({
@@ -116,6 +122,7 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 
 	const handleNameChange = useCallback((value: string) => {
 		setName(value);
+		setSaveError(null);
 	}, []);
 
 	function toggleStep(stepId: string) {
@@ -180,6 +187,7 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 					<CardAction>
 						<DeleteDialog
 							disabled={deleteMutation.isPending}
+							isPending={deleteMutation.isPending}
 							onConfirm={handleDelete}
 							releaseName={release.name}
 							trigger={
@@ -327,14 +335,32 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 					/>
 				</div>
 
+				{saveError && (
+					<div className="mb-4 flex items-center gap-3 rounded-lg border border-red-300 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
+						<span className="text-lg">✕</span>
+						<p className="font-medium text-red-900 text-sm dark:text-red-200">
+							{saveError}
+						</p>
+					</div>
+				)}
+
 				<div className="mb-6 flex justify-end">
 					<Button
 						disabled={saving || !name.trim() || !date}
 						onClick={handleSave}
 						type="button"
 					>
-						{saving ? "Saving..." : "Save"}
-						<SaveIcon aria-hidden="true" data-icon="inline-end" />
+						{saving ? (
+							<>
+								<LoaderCircleIcon aria-hidden="true" className="animate-spin" />
+								Saving...
+							</>
+						) : (
+							<>
+								Save
+								<SaveIcon aria-hidden="true" data-icon="inline-end" />
+							</>
+						)}
 					</Button>
 				</div>
 

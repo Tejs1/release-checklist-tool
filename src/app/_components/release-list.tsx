@@ -4,6 +4,7 @@ import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
 	TableBody,
@@ -28,7 +29,28 @@ export function ReleaseList() {
 
 	if (isLoading) {
 		return (
-			<p className="py-12 text-center text-muted-foreground">Loading...</p>
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead>Release</TableHead>
+						<TableHead>Date</TableHead>
+						<TableHead>Progress</TableHead>
+						<TableHead>Status</TableHead>
+						<TableHead className="text-right" />
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{Array.from({ length: 4 }).map((_, i) => (
+						<TableRow key={i}>
+							<TableCell><Skeleton className="h-4 w-24" /></TableCell>
+							<TableCell><Skeleton className="h-4 w-32" /></TableCell>
+							<TableCell><Skeleton className="h-4 w-12" /></TableCell>
+							<TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+							<TableCell className="text-right"><Skeleton className="ml-auto size-8 rounded-md" /></TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
 		);
 	}
 
@@ -75,6 +97,7 @@ export function ReleaseList() {
 						<TableCell className="text-right">
 							<DeleteDialog
 								disabled={deleteMutation.isPending}
+								isPending={deleteMutation.isPending}
 								onConfirm={() => deleteMutation.mutate({ id: release.id })}
 								releaseName={release.name}
 								trigger={

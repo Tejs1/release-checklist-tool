@@ -9,6 +9,7 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/trpc/react";
 
 const actionColors: Record<string, string> = {
@@ -52,7 +53,7 @@ function formatRelativeTime(date: Date): string {
 
 export function ActivityLog({ releaseId }: { releaseId: number }) {
 	const [open, setOpen] = useState(false);
-	const { data: events } = api.release.getActivityLog.useQuery(
+	const { data: events, isLoading } = api.release.getActivityLog.useQuery(
 		{ releaseId },
 		{ enabled: open },
 	);
@@ -78,7 +79,17 @@ export function ActivityLog({ releaseId }: { releaseId: number }) {
 				</Button>
 			</CollapsibleTrigger>
 			<CollapsibleContent>
-				{events && events.length > 0 ? (
+				{isLoading ? (
+					<div className="ml-2 mt-3 border-l-2 border-muted pl-5">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div className="relative mb-4 last:mb-0" key={i}>
+								<Skeleton className="absolute -left-[27px] top-1 size-2.5 rounded-full" />
+								<Skeleton className="mb-1 h-4 w-40" />
+								<Skeleton className="h-3 w-16" />
+							</div>
+						))}
+					</div>
+				) : events && events.length > 0 ? (
 					<div className="ml-2 mt-3 border-l-2 border-muted pl-5">
 						{events.map((event) => (
 							<div className="relative mb-4 last:mb-0" key={event.id}>

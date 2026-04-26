@@ -30,9 +30,7 @@ describe("DeleteDialog", () => {
 
 		expect(screen.getByText("Delete release?")).toBeInTheDocument();
 		expect(screen.getByText("Version 1.0.0")).toBeInTheDocument();
-		expect(
-			screen.getByText(/permanently deleted/),
-		).toBeInTheDocument();
+		expect(screen.getByText(/permanently deleted/)).toBeInTheDocument();
 	});
 
 	it("calls onConfirm when Delete is confirmed", async () => {
@@ -69,5 +67,43 @@ describe("DeleteDialog", () => {
 		await user.click(screen.getByRole("button", { name: "Cancel" }));
 
 		expect(onConfirm).not.toHaveBeenCalled();
+	});
+
+	it("does not bubble dialog action clicks to parent click handlers", async () => {
+		const onConfirm = vi.fn();
+		const onParentClick = vi.fn();
+		const user = userEvent.setup();
+
+		render(
+			<table>
+				<tbody>
+					<tr onClick={onParentClick}>
+						<td>
+							<DeleteDialog
+								onConfirm={onConfirm}
+								releaseName="Version 1.0.0"
+								trigger={<button type="button">Open</button>}
+							/>
+						</td>
+					</tr>
+				</tbody>
+			</table>,
+		);
+
+		await user.click(screen.getByText("Open"));
+		onParentClick.mockClear();
+
+		await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+		expect(onConfirm).not.toHaveBeenCalled();
+		expect(onParentClick).not.toHaveBeenCalled();
+
+		await user.click(screen.getByText("Open"));
+		onParentClick.mockClear();
+
+		await user.click(screen.getByRole("button", { name: "Delete" }));
+
+		expect(onConfirm).toHaveBeenCalledOnce();
+		expect(onParentClick).not.toHaveBeenCalled();
 	});
 });

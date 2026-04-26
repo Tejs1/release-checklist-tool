@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import type { ReleaseStatus } from "@/shared/steps";
 import { api } from "@/trpc/react";
 import { ReleaseForm } from "./release-form";
@@ -21,10 +22,16 @@ export function ReleaseDetail({
 }: {
 	release: InitialRelease;
 }) {
+	const router = useRouter();
 	const { data: release } = api.release.getById.useQuery(
 		{ id: initial.id },
 		{ initialData: initial },
 	);
+
+	if (!release) {
+		router.replace("/");
+		return null;
+	}
 
 	return (
 		<ReleaseForm
