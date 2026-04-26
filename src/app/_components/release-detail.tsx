@@ -10,6 +10,7 @@ type InitialRelease = {
 	date: Date;
 	additionalInfo: string | null;
 	completedSteps: string[];
+	stepCompletedAt: Record<string, string>;
 	createdAt: Date;
 	updatedAt: Date;
 	status: ReleaseStatus;
