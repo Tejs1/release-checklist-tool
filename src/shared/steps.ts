@@ -67,3 +67,27 @@ export function getDependentSteps(stepId: StepId): StepId[] {
 	}
 	return result;
 }
+
+export function suggestNextVersion(
+	existingNames: string[],
+): { prefix: string; patch: string; minor: string; major: string } | null {
+	const latest = existingNames[0];
+	if (!latest) return null;
+
+	const match = latest.match(/^(.*?)(\d+\.\d+\.\d+)$/);
+	if (!match) return null;
+
+	const prefix = match[1] ?? "";
+	const versionStr = match[2] ?? "";
+	const parts = versionStr.split(".").map(Number);
+	if (parts.length !== 3) return null;
+
+	const [maj = 0, min = 0, pat = 0] = parts;
+
+	return {
+		prefix,
+		patch: `${prefix}${maj}.${min}.${pat + 1}`,
+		minor: `${prefix}${maj}.${min + 1}.0`,
+		major: `${prefix}${maj + 1}.0.0`,
+	};
+}
