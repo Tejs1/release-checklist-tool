@@ -12,7 +12,9 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { RELEASE_STEPS } from "@/shared/steps";
 import { api } from "@/trpc/react";
+import { DeleteDialog } from "./delete-dialog";
 import { StatusBadge } from "./status-badge";
 
 export function ReleaseList() {
@@ -23,12 +25,6 @@ export function ReleaseList() {
 	const deleteMutation = api.release.delete.useMutation({
 		onSuccess: () => utils.release.list.invalidate(),
 	});
-
-	function handleDelete(e: React.MouseEvent, id: number, name: string) {
-		e.stopPropagation();
-		if (!confirm(`Delete release "${name}"?`)) return;
-		deleteMutation.mutate({ id });
-	}
 
 	if (isLoading) {
 		return (
@@ -50,6 +46,7 @@ export function ReleaseList() {
 				<TableRow>
 					<TableHead>Release</TableHead>
 					<TableHead>Date</TableHead>
+					<TableHead>Progress</TableHead>
 					<TableHead>Status</TableHead>
 					<TableHead className="text-right" />
 				</TableRow>
@@ -69,21 +66,30 @@ export function ReleaseList() {
 								day: "numeric",
 							})}
 						</TableCell>
+						<TableCell className="text-muted-foreground text-sm">
+							{release.completedSteps.length}/{RELEASE_STEPS.length}
+						</TableCell>
 						<TableCell>
 							<StatusBadge status={release.status} />
 						</TableCell>
 						<TableCell className="text-right">
-							<Button
-								aria-label={`Delete ${release.name}`}
-								className="text-muted-foreground hover:text-destructive"
+							<DeleteDialog
 								disabled={deleteMutation.isPending}
-								onClick={(e) => handleDelete(e, release.id, release.name)}
-								size="icon-sm"
-								type="button"
-								variant="ghost"
-							>
-								<Trash2Icon aria-hidden="true" />
-							</Button>
+								onConfirm={() => deleteMutation.mutate({ id: release.id })}
+								releaseName={release.name}
+								trigger={
+									<Button
+										aria-label={`Delete ${release.name}`}
+										className="text-muted-foreground hover:text-destructive"
+										onClick={(e) => e.stopPropagation()}
+										size="icon-sm"
+										type="button"
+										variant="ghost"
+									>
+										<Trash2Icon aria-hidden="true" />
+									</Button>
+								}
+							/>
 						</TableCell>
 					</TableRow>
 				))}
