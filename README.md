@@ -72,24 +72,32 @@ The `status` field is **computed** from `completed_steps`:
 
 Action values: `created`, `step_completed`, `step_uncompleted`, `info_updated`, `name_updated`, `date_updated`.
 
-## API Endpoints (tRPC)
+## API (GraphQL)
 
-All endpoints are served via tRPC at `/api/trpc`. The procedures are:
+The API is served via [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server) at
+`/api/graphql` (GraphiQL is available there in development). The schema is built
+code-first with [Pothos](https://pothos-graphql.dev/); the SDL is emitted to
+`schema.graphql` via `bun run gql:schema`.
 
-| Procedure               | Type     | Input                                              | Description                                      |
-| ----------------------- | -------- | -------------------------------------------------- | ------------------------------------------------ |
-| `release.list`          | Query    | —                                                  | List all releases (sorted by date desc)           |
-| `release.getById`       | Query    | `{ id: number }`                                   | Get a single release by ID                        |
-| `release.suggestVersion`| Query    | —                                                  | Suggest next patch/minor/major version names      |
-| `release.getOngoing`    | Query    | —                                                  | Get the most recent ongoing release (if any)      |
-| `release.getActivityLog`| Query    | `{ releaseId: number }`                            | Get activity log entries for a release            |
-| `release.create`        | Mutation | `{ name, date, additionalInfo? }`                  | Create a new release (date must not be in past)   |
-| `release.update`        | Mutation | `{ id, name, date, additionalInfo, completedSteps }` | Update a release (enforces step dependencies)  |
-| `release.delete`        | Mutation | `{ id: number }`                                   | Delete a release and its activity log             |
+| Operation        | Type     | Arguments                                                       | Description                                      |
+| ---------------- | -------- | --------------------------------------------------------------- | ------------------------------------------------ |
+| `releases`       | Query    | —                                                               | List all releases (sorted by date desc)          |
+| `release`        | Query    | `id: Int!`                                                      | Get a single release by ID (nullable)            |
+| `suggestVersion` | Query    | —                                                               | Suggest next patch/minor/major version names     |
+| `ongoingRelease` | Query    | —                                                               | Get the most recent ongoing release (if any)     |
+| `activityLog`    | Query    | `releaseId: Int!`                                               | Get activity log entries for a release           |
+| `createRelease`  | Mutation | `input: CreateReleaseInput!` (`name, date, additionalInfo?`)    | Create a new release (date must not be in past)  |
+| `updateRelease`  | Mutation | `input: UpdateReleaseInput!` (`id, name, date, additionalInfo, completedSteps`) | Update a release (enforces step dependencies) |
+| `deleteRelease`  | Mutation | `id: Int!`                                                      | Delete a release and its activity log            |
+
+The frontend consumes these through typed [gql.tada](https://gql-tada.0no.co/)
+documents wrapped in [@tanstack/react-query](https://tanstack.com/query) hooks
+(`src/graphql/hooks.ts`). React Server Components fetch in-process against the
+schema via `src/graphql/server.tsx` (no internal HTTP round-trip).
 
 ## Tech Stack
 
 - **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS 4
-- **API**: tRPC v11
+- **API**: GraphQL — GraphQL Yoga + Pothos (server), gql.tada + graphql-request + React Query (client)
 - **Database**: PostgreSQL via Neon + Drizzle ORM
 - **Deployment**: Vercel + Neon

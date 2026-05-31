@@ -8,7 +8,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { api } from "@/trpc/react";
+import { useSuggestVersionQuery } from "@/graphql/hooks";
 
 export function VersionAutocomplete({
 	value,
@@ -19,7 +19,7 @@ export function VersionAutocomplete({
 }) {
 	const [open, setOpen] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
-	const { data: suggestion } = api.release.suggestVersion.useQuery();
+	const { data: suggestion } = useSuggestVersionQuery();
 
 	const suggestions = suggestion
 		? [
@@ -40,8 +40,8 @@ export function VersionAutocomplete({
 			<PopoverTrigger asChild>
 				<Input
 					id="release-name"
-					onChange={(e) => onChange(e.target.value)}
 					onBlur={() => setTimeout(() => setOpen(false), 150)}
+					onChange={(e) => onChange(e.target.value)}
 					onFocus={() => setOpen(true)}
 					placeholder="e.g. Version 1.0.0"
 					ref={inputRef}

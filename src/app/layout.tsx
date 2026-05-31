@@ -2,8 +2,8 @@ import "@/styles/globals.css";
 
 import type { Metadata } from "next";
 import { Geist, Inter } from "next/font/google";
+import { ReactQueryProvider } from "@/graphql/provider";
 import { cn } from "@/lib/utils";
-import { TRPCReactProvider } from "@/trpc/react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -24,7 +24,7 @@ export default function RootLayout({
 	return (
 		<html className={cn(geist.variable, "font-sans", inter.variable)} lang="en">
 			<body className="min-h-screen bg-gray-50">
-				<TRPCReactProvider>
+				<ReactQueryProvider>
 					<header className="border-gray-200 border-b bg-white py-6 text-center">
 						<h1 className="font-bold text-3xl text-gray-900 tracking-tight">
 							ReleaseCheck
@@ -34,7 +34,7 @@ export default function RootLayout({
 						</p>
 					</header>
 					<main className="mx-auto max-w-4xl px-4 py-8">{children}</main>
-				</TRPCReactProvider>
+				</ReactQueryProvider>
 			</body>
 		</html>
 	);

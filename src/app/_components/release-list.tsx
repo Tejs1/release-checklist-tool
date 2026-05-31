@@ -13,18 +13,22 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	useDeleteRelease,
+	useReleaseCache,
+	useReleasesQuery,
+} from "@/graphql/hooks";
 import { RELEASE_STEPS } from "@/shared/steps";
-import { api } from "@/trpc/react";
 import { DeleteDialog } from "./delete-dialog";
 import { StatusBadge } from "./status-badge";
 
 export function ReleaseList() {
 	const router = useRouter();
-	const { data: releases, isLoading } = api.release.list.useQuery();
-	const utils = api.useUtils();
+	const { data: releases, isLoading } = useReleasesQuery();
+	const { invalidateReleases } = useReleaseCache();
 
-	const deleteMutation = api.release.delete.useMutation({
-		onSuccess: () => utils.release.list.invalidate(),
+	const deleteMutation = useDeleteRelease({
+		onSuccess: () => invalidateReleases(),
 	});
 
 	if (isLoading) {
@@ -42,11 +46,21 @@ export function ReleaseList() {
 				<TableBody>
 					{Array.from({ length: 4 }).map((_, i) => (
 						<TableRow key={i}>
-							<TableCell><Skeleton className="h-4 w-24" /></TableCell>
-							<TableCell><Skeleton className="h-4 w-32" /></TableCell>
-							<TableCell><Skeleton className="h-4 w-12" /></TableCell>
-							<TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-							<TableCell className="text-right"><Skeleton className="ml-auto size-8 rounded-md" /></TableCell>
+							<TableCell>
+								<Skeleton className="h-4 w-24" />
+							</TableCell>
+							<TableCell>
+								<Skeleton className="h-4 w-32" />
+							</TableCell>
+							<TableCell>
+								<Skeleton className="h-4 w-12" />
+							</TableCell>
+							<TableCell>
+								<Skeleton className="h-5 w-16 rounded-full" />
+							</TableCell>
+							<TableCell className="text-right">
+								<Skeleton className="ml-auto size-8 rounded-md" />
+							</TableCell>
 						</TableRow>
 					))}
 				</TableBody>

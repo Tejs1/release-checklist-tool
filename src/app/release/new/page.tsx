@@ -1,11 +1,17 @@
 import { ReleaseForm } from "@/app/_components/release-form";
-import { api, HydrateClient } from "@/trpc/server";
+import {
+	OngoingReleaseDocument,
+	SuggestVersionDocument,
+} from "@/graphql/documents";
+import { HydrateClient, prefetchQuery } from "@/graphql/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewReleasePage() {
-	void api.release.suggestVersion.prefetch();
-	void api.release.getOngoing.prefetch();
+	await Promise.all([
+		prefetchQuery(["suggestVersion"], SuggestVersionDocument),
+		prefetchQuery(["ongoingRelease"], OngoingReleaseDocument),
+	]);
 
 	return (
 		<HydrateClient>
