@@ -32,7 +32,12 @@ export async function gqlServer<Result, Variables>(
 		throw new Error(result.errors[0]?.message ?? "GraphQL execution error");
 	}
 
-	return result.data as Result;
+	// graphql-js builds result maps with null-prototype objects, which React's
+	// Server->Client serializer rejects when the dehydrated cache crosses into
+	// a Client Component. Round-trip to plain objects (data is already
+	// JSON-serializable: scalars produce strings/numbers). The client transport
+	// returns plain objects already, so this only matters for in-process runs.
+	return JSON.parse(JSON.stringify(result.data)) as Result;
 }
 
 // One QueryClient per request, shared between prefetch and HydrateClient.
