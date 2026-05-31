@@ -184,7 +184,24 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 					</span>
 				</nav>
 				{!isNew && (
-					<CardAction>
+					<CardAction className="flex gap-2">
+						<Button
+							disabled={saving || !name.trim() || !date}
+							onClick={handleSave}
+							type="button"
+						>
+							{saving ? (
+								<>
+									<LoaderCircleIcon aria-hidden="true" className="animate-spin" />
+									Saving...
+								</>
+							) : (
+								<>
+									Save
+									<SaveIcon aria-hidden="true" data-icon="inline-end" />
+								</>
+							)}
+						</Button>
 						<DeleteDialog
 							disabled={deleteMutation.isPending}
 							isPending={deleteMutation.isPending}
