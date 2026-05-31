@@ -12,10 +12,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { api, HydrateClient } from "@/trpc/server";
+import { ReleasesDocument } from "@/graphql/documents";
+import { HydrateClient, prefetchQuery } from "@/graphql/server";
 
 export default async function Home() {
-	void api.release.list.prefetch();
+	await prefetchQuery(["releases"], ReleasesDocument);
 
 	return (
 		<HydrateClient>

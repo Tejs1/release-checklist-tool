@@ -10,7 +10,7 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/trpc/react";
+import { useActivityLogQuery } from "@/graphql/hooks";
 
 const actionColors: Record<string, string> = {
 	created: "bg-indigo-500",
@@ -30,7 +30,7 @@ const actionLabels: Record<string, string> = {
 	date_updated: "Date changed",
 };
 
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(date: string): string {
 	const now = new Date();
 	const diffMs = now.getTime() - new Date(date).getTime();
 	const diffMin = Math.floor(diffMs / 60_000);
@@ -53,10 +53,9 @@ function formatRelativeTime(date: Date): string {
 
 export function ActivityLog({ releaseId }: { releaseId: number }) {
 	const [open, setOpen] = useState(false);
-	const { data: events, isLoading } = api.release.getActivityLog.useQuery(
-		{ releaseId },
-		{ enabled: open },
-	);
+	const { data: events, isLoading } = useActivityLogQuery(releaseId, {
+		enabled: open,
+	});
 
 	return (
 		<Collapsible onOpenChange={setOpen} open={open}>
@@ -80,23 +79,23 @@ export function ActivityLog({ releaseId }: { releaseId: number }) {
 			</CollapsibleTrigger>
 			<CollapsibleContent>
 				{isLoading ? (
-					<div className="ml-2 mt-3 border-l-2 border-muted pl-5">
+					<div className="mt-3 ml-2 border-muted border-l-2 pl-5">
 						{Array.from({ length: 3 }).map((_, i) => (
 							<div className="relative mb-4 last:mb-0" key={i}>
-								<Skeleton className="absolute -left-[27px] top-1 size-2.5 rounded-full" />
+								<Skeleton className="absolute top-1 -left-[27px] size-2.5 rounded-full" />
 								<Skeleton className="mb-1 h-4 w-40" />
 								<Skeleton className="h-3 w-16" />
 							</div>
 						))}
 					</div>
 				) : events && events.length > 0 ? (
-					<div className="ml-2 mt-3 border-l-2 border-muted pl-5">
+					<div className="mt-3 ml-2 border-muted border-l-2 pl-5">
 						{events.map((event) => (
 							<div className="relative mb-4 last:mb-0" key={event.id}>
 								<div
-									className={`absolute -left-[27px] top-1 size-2.5 rounded-full ${actionColors[event.action] ?? "bg-gray-400"}`}
+									className={`absolute top-1 -left-[27px] size-2.5 rounded-full ${actionColors[event.action] ?? "bg-gray-400"}`}
 								/>
-								<div className="text-sm text-foreground">
+								<div className="text-foreground text-sm">
 									{event.action === "created" ? (
 										<strong>Release created</strong>
 									) : (
@@ -113,9 +112,7 @@ export function ActivityLog({ releaseId }: { releaseId: number }) {
 						))}
 					</div>
 				) : events ? (
-					<p className="mt-2 text-muted-foreground text-sm">
-						No activity yet.
-					</p>
+					<p className="mt-2 text-muted-foreground text-sm">No activity yet.</p>
 				) : null}
 			</CollapsibleContent>
 		</Collapsible>

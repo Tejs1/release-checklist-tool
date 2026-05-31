@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronRightIcon, LoaderCircleIcon, SaveIcon, Trash2Icon } from "lucide-react";
+import {
+	ChevronRightIcon,
+	LoaderCircleIcon,
+	SaveIcon,
+	Trash2Icon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -17,13 +22,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+	useCreateRelease,
+	useDeleteRelease,
+	useOngoingReleaseQuery,
+	useReleaseCache,
+	useUpdateRelease,
+} from "@/graphql/hooks";
+import {
 	canCompleteStep,
 	getBlockedReason,
 	getDependentSteps,
 	RELEASE_STEPS,
 	type StepId,
 } from "@/shared/steps";
-import { api } from "@/trpc/react";
 import { ActivityLog } from "./activity-log";
 import { DeleteDialog } from "./delete-dialog";
 import { VersionAutocomplete } from "./version-autocomplete";
@@ -31,13 +42,13 @@ import { VersionAutocomplete } from "./version-autocomplete";
 type ReleaseData = {
 	id: number;
 	name: string;
-	date: Date;
+	date: string;
 	additionalInfo: string | null;
 	completedSteps: string[];
 	stepCompletedAt: Record<string, string>;
 };
 
-function toDateInputValue(date: Date): string {
+function toDateInputValue(date: string): string {
 	return new Date(date).toISOString().split("T")[0] ?? "";
 }
 
@@ -82,40 +93,37 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 	);
 	const [saving, setSaving] = useState(false);
 
-	const utils = api.useUtils();
+	const cache = useReleaseCache();
 
-	const { data: ongoingRelease } = api.release.getOngoing.useQuery(
-		undefined,
-		{ enabled: isNew },
-	);
+	const { data: ongoingRelease } = useOngoingReleaseQuery({ enabled: isNew });
 
 	const [saveError, setSaveError] = useState<string | null>(null);
 
-	const createMutation = api.release.create.useMutation({
+	const createMutation = useCreateRelease({
 		onSuccess: (data) => {
 			setSaveError(null);
-			utils.release.list.invalidate();
-			utils.release.suggestVersion.invalidate();
+			cache.invalidateReleases();
+			cache.invalidateSuggestVersion();
 			if (data) router.push(`/release/${data.id}`);
 		},
 		onError: (err) => setSaveError(err.message),
 	});
 
-	const updateMutation = api.release.update.useMutation({
+	const updateMutation = useUpdateRelease({
 		onSuccess: () => {
 			setSaveError(null);
-			utils.release.list.invalidate();
-			utils.release.getById.invalidate({ id: release?.id });
-			utils.release.getActivityLog.invalidate({
-				releaseId: release?.id,
-			});
+			cache.invalidateReleases();
+			if (release) {
+				cache.invalidateRelease(release.id);
+				cache.invalidateActivityLog(release.id);
+			}
 		},
 		onError: (err) => setSaveError(err.message),
 	});
 
-	const deleteMutation = api.release.delete.useMutation({
+	const deleteMutation = useDeleteRelease({
 		onSuccess: () => {
-			utils.release.list.invalidate();
+			cache.invalidateReleases();
 			router.push("/");
 		},
 	});
@@ -129,7 +137,9 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 		setCompletedSteps((prev) => {
 			if (prev.includes(stepId)) {
 				const dependents = getDependentSteps(stepId as StepId);
-				return prev.filter((s) => s !== stepId && !dependents.includes(s as StepId));
+				return prev.filter(
+					(s) => s !== stepId && !dependents.includes(s as StepId),
+				);
 			}
 			return [...prev, stepId];
 		});
@@ -192,7 +202,10 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 						>
 							{saving ? (
 								<>
-									<LoaderCircleIcon aria-hidden="true" className="animate-spin" />
+									<LoaderCircleIcon
+										aria-hidden="true"
+										className="animate-spin"
+									/>
 									Saving...
 								</>
 							) : (
@@ -239,10 +252,7 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 					<div className="space-y-2">
 						<Label htmlFor="release-name">Release</Label>
 						{isNew ? (
-							<VersionAutocomplete
-								onChange={handleNameChange}
-								value={name}
-							/>
+							<VersionAutocomplete onChange={handleNameChange} value={name} />
 						) : (
 							<Input
 								id="release-name"
@@ -287,13 +297,13 @@ export function ReleaseForm({ release }: { release?: ReleaseData }) {
 						<div className="mb-6 space-y-1">
 							{RELEASE_STEPS.map((step) => {
 								const isComplete = completedSteps.includes(step.id);
-								const blocked = !isComplete && !canCompleteStep(step.id, completedSteps);
+								const blocked =
+									!isComplete && !canCompleteStep(step.id, completedSteps);
 								const blockedReason = blocked
 									? getBlockedReason(step.id, completedSteps)
 									: null;
 								const checkboxId = `release-step-${step.id}`;
-								const timestamp =
-									release.stepCompletedAt[step.id];
+								const timestamp = release.stepCompletedAt[step.id];
 
 								return (
 									<div

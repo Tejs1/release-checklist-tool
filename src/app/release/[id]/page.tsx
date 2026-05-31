@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { ReleaseDetail } from "@/app/_components/release-detail";
-import { api, HydrateClient } from "@/trpc/server";
+import { ReleaseDocument } from "@/graphql/documents";
+import { gqlServer } from "@/graphql/server";
 
 export default async function ReleaseDetailPage({
 	params,
@@ -12,12 +13,8 @@ export default async function ReleaseDetailPage({
 	const releaseId = Number(id);
 	if (Number.isNaN(releaseId)) notFound();
 
-	const release = await api.release.getById({ id: releaseId });
+	const { release } = await gqlServer(ReleaseDocument, { id: releaseId });
 	if (!release) notFound();
 
-	return (
-		<HydrateClient>
-			<ReleaseDetail release={release} />
-		</HydrateClient>
-	);
+	return <ReleaseDetail release={release} />;
 }
