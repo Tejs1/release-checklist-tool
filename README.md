@@ -1,41 +1,65 @@
 # ReleaseCheck
 
-A release checklist tool that helps developers track their release process. Built with the T3 Stack (Next.js, tRPC, Drizzle ORM, Tailwind CSS) backed by PostgreSQL.
+A release checklist tool that helps developers track their release process. Built with Next.js, a GraphQL API, Drizzle ORM, and Tailwind CSS, backed by PostgreSQL.
 
-## Getting Started
+## Running locally
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/) (or Node.js 18+)
-- A PostgreSQL database (e.g., [Neon](https://neon.tech/) free tier)
+- Either [Docker](https://www.docker.com/) (Option A) or a PostgreSQL database such as a [Neon](https://neon.tech/) free tier (Option B)
 
-### Setup
+The app picks its database driver from the connection string automatically: a
+Neon URL (host contains `neon.tech`) uses the serverless HTTP driver, while any
+other Postgres URL uses a standard TCP connection — so the **same code runs
+against a local container or Neon with no changes**.
+
+### Option A — Docker (Postgres in a container)
+
+The quickest way to run the whole stack locally; no external database needed.
 
 ```bash
-# Install dependencies
+# 1. Install dependencies
 bun install
 
-# Copy environment file and add your database URL
-cp .env.example .env
-# Edit .env with your PostgreSQL connection string
+# 2. Start PostgreSQL + the app
+docker compose up -d
 
-# Push the database schema
-bun run db:push
+# 3. First run only — create the tables
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/releasecheck" bun run db:push
+```
 
-# Start the dev server
+The app is now at [http://localhost:3000](http://localhost:3000).
+
+Prefer to run the app from source (hot reload) against the container's Postgres?
+Start only the database:
+
+```bash
+docker compose up -d db
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/releasecheck" bun run db:push
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/releasecheck" bun dev
+```
+
+### Option B — Bun + your own database
+
+```bash
+bun install
+cp .env.example .env       # set DATABASE_URL to your Postgres / Neon connection string
+bun run db:push            # create the tables
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Docker (local development)
+### Try the API
+
+Open [http://localhost:3000/api/graphql](http://localhost:3000/api/graphql) for
+the GraphiQL explorer, or query it directly:
 
 ```bash
-# Start PostgreSQL + app
-docker compose up
-
-# In a separate terminal (first time only): push the schema
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/releasecheck" bun run db:push
+curl -s http://localhost:3000/api/graphql \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ releases { id name status } suggestVersion { patch minor major } }"}'
 ```
 
 ## Database Schema
@@ -99,5 +123,5 @@ schema via `src/graphql/server.tsx` (no internal HTTP round-trip).
 
 - **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS 4
 - **API**: GraphQL — GraphQL Yoga + Pothos (server), gql.tada + graphql-request + React Query (client)
-- **Database**: PostgreSQL via Neon + Drizzle ORM
-- **Deployment**: Vercel + Neon
+- **Database**: PostgreSQL + Drizzle ORM (Neon serverless HTTP driver in production, standard `postgres` driver for local/Docker)
+- **Deployment**: Vercel + Neon (also runs locally via Docker)
